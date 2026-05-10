@@ -1,7 +1,6 @@
 'use strict';
 
 const https = require('https');
-const { URL } = require('url');
 
 /**
  * 日志工具（带时间戳和级别）
@@ -31,14 +30,15 @@ const parseAction = (action) => {
 
 /**
  * 将 ISO 8601 时间字符串转换为北京时间（UTC+8）显示
- * @param {string} isoTime - ISO 8601 时间字符串
- * @returns {string} - 北京时间字符串，如 "2024-01-15 08:00:00"
+ * @param {string} isoTime - ISO 8601 时间字符串（如 "2026-05-10T06:00:00Z"）
+ * @returns {string} - 北京时间字符串，如 "2026-05-10 14:00:00"
  */
 const toBeijingTime = (isoTime) => {
   const date = new Date(isoTime);
-  // UTC+8 偏移 8 小时
-  const offset = 8 * 60 * 60 * 1000;
-  const bjDate = new Date(date.getTime() + offset);
+  // 北京时间 = UTC+8
+  const bjTimestamp = date.getTime() + 8 * 60 * 60 * 1000;
+  const bjDate = new Date(bjTimestamp);
+  // bjDate 的时间戳已经是 UTC+8，用 getUTC* 方法读取即得到北京时间
   const y = bjDate.getUTCFullYear();
   const mo = String(bjDate.getUTCMonth() + 1).padStart(2, '0');
   const d = String(bjDate.getUTCDate()).padStart(2, '0');
@@ -97,16 +97,10 @@ const sendToWeixin = (data) => {
       markdown: { content },
     });
 
-    let parsedUrl;
-    try {
-      parsedUrl = new URL(webhookUrl);
-    } catch (e) {
-      return reject(new Error(`无效的 WEIXIN_WEBHOOK_URL: ${webhookUrl}`));
-    }
-
+    const urlObj = new URL(webhookUrl);
     const options = {
-      hostname: parsedUrl.hostname,
-      path: parsedUrl.pathname + parsedUrl.search,
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
