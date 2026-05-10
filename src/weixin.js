@@ -1,6 +1,7 @@
 'use strict';
 
 const https = require('https');
+const url = require('url');
 
 /**
  * 日志工具（带时间戳和级别）
@@ -97,10 +98,10 @@ const sendToWeixin = (data) => {
       markdown: { content },
     });
 
-    const urlObj = new URL(webhookUrl);
+    const urlObj = url.parse(webhookUrl);
     const options = {
       hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
+      path: urlObj.path,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

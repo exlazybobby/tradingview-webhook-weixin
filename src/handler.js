@@ -17,18 +17,23 @@ const log = {
 const REQUIRED_FIELDS = ['action', 'ticker', 'exchange', 'interval', 'open', 'close', 'high', 'low', 'time'];
 
 /**
- * 发送 JSON 响应
- * @param {import('http').ServerResponse} res
+ * 发送 JSON 响应（兼容 Node http.ServerResponse 和 Vercel res）
+ * @param {any} res - Node res 或 Vercel res
  * @param {number} statusCode
  * @param {object} body
  */
 const sendJson = (res, statusCode, body) => {
   const json = JSON.stringify(body);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(json),
-  });
-  res.end(json);
+  // Vercel res 有 status()/json() 方法；Node res 有 writeHead()/end()
+  if (typeof res.status === 'function') {
+    res.status(statusCode).json(body);
+  } else {
+    res.writeHead(statusCode, {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(json),
+    });
+    res.end(json);
+  }
 };
 
 /**
